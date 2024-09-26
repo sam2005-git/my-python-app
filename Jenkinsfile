@@ -1,69 +1,110 @@
-pipeline{
-    agent any 
+pipeline {
+    agent any
 
     environment {
-        PYTHON_ENV == 'venv'     // Virtual Environment for Python
-        
+        PYTHON_ENV = 'venv'  // Assign environment variable for virtual environment
     }
+
     stages {
-        // Stage 1: Clone the repository
-        stage('Checkout'){
-            steps{
-                echo 'Cloneing repository...'
-                git branch: 'main', url: 'https://github.com/sam2005-git/my-python-app.git'
-            }
-        }
-
-        // Stage 2: Set up the Python enviroment
-
-        stage('Setup Environment') {
+        stage('Setup Python Environment') {
             steps {
-                echo 'Setting up python virtula enviroment...'
-                sh '''
-                python3 -m venv ${PYTHON_ENV}      # create a virtual environment
-                source ${PYTHON_ENV}/bin/activate   # Activate the virtual environment
-                pip install -r requirements.txt   # Install dependencies
-                '''
+                script {
+                    echo "Setting up Python environment: ${PYTHON_ENV}"
+                    // Set up the virtual environment
+                    sh 'python3 -m venv ${PYTHON_ENV}'
+                    // Activate the virtual environment (depending on your shell)
+                    sh '. ${PYTHON_ENV}/bin/activate'
+                    // Upgrade pip
+                    sh 'pip install --upgrade pip'
+                }
             }
         }
 
-        // Stage 3: Run the tests
-        stage('Run Tests') {
+        stage('Install Dependencies') {
             steps {
-                echo 'Running unit tests...'
-                sh  '''
-                source ${PYTHON_ENV}/vin/activate
-                pytest tests/
-                '''
+                script {
+                    echo 'Installing project dependencies...'
+                    // Install dependencies, assuming you have a requirements.txt file
+                    sh 'pip install -r requirements.txt'
+                }
             }
-            
         }
 
-        // Stage 4: Deploy (this could be to a local http server, for example)
+        stage('Linting') {
+            steps {
+                script {
+                    echo 'Running linting...'
+                    // Run a linter such as flake8
+                    sh 'flake8 .'
+                }
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                script {
+                    echo 'Running unit tests...'
+                    // Run unit tests using a test framework like pytest
+                    sh 'pytest'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    echo 'Building the project...'
+                    // Add build steps here if applicable (e.g., creating a package or docker image)
+                    sh 'python setup.py build'
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                script {
+                    echo 'Packaging the project...'
+                    // Package the project, for example, into a wheel or tarball
+                    sh 'python setup.py sdist bdist_wheel'
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
-                echo 'Deploying application...'
-                // In this example, we'll simulate deployment by copying the code to a server directory
-                sh '''
-                cp -r * /path/to/local/http/server/root/  # Copy the app to the deployment directory
-                '''
+                script {
+                    echo 'Deploying the project...'
+                    // Add deployment steps here if applicable
+                    // Example: pushing to a production server or a package repository
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                echo 'Cleaning up...'
+                // Deactivate and remove the virtual environment after the pipeline run
+                sh 'deactivate || true'  // Ensure deactivate does not fail the build
+                sh 'rm -rf ${PYTHON_ENV}'
             }
         }
 
+        success {
+            script {
+                echo 'Pipeline completed successfully!'
+            }
+        }
 
-        
+        failure {
+            script {
+                echo 'Pipeline failed. Check the logs for details.'
+            }
+        }
     }
 }
 
-post {
-    always {
-        echo 'Cleaning up workspace...'
-        cleanWs()     // Clean the workspace after the pipeline execution
-    }
-    success {
-        echo 'Pipeline completed successfully!'
-    }
-    failure {
-        echo 'Pipeline failed!'
-    }
-}
+
+            
+           
