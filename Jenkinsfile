@@ -10,18 +10,18 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 echo "Creating virtual environment..."
-                bat 'C:\Users\Lenovo\AppData\Local\Programs\Python\Python312\python.exe'  // Use double backslashes
+                bat 'C:\\Users\\Lenovo\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m venv venv'  // Create virtual environment
                 echo "Activating virtual environment..."
-                bat 'call venv\\Scripts\\activate.bat'  // This line is fine as is
+                bat 'call venv\\Scripts\\activate.bat'  // Activate the virtual environment
                 echo "Installing dependencies..."
-                bat 'C:\Users\Lenovo\AppData\Local\Programs\Python\Python312\Scripts\pip.exe'  // Use double backslashes
+                bat 'venv\\Scripts\\pip.exe install -r requirements.txt'  // Install dependencies from requirements.txt
             }
         }
         stage('Run Tests') {
             steps {
                 echo "Running tests..."
-                // Add your testing commands here, for example:
-                // bat 'pytest'
+                // Run your tests here, for example using pytest
+                bat 'venv\\Scripts\\pytest'  // Running tests with pytest
             }
         }
         stage('Deploy') {
